@@ -37,14 +37,14 @@ module Occi
 
         it "instantiates a compute resource using type name" do
           compute = @client.get_resource "compute"
-          
+
           compute.should be_a_kind_of Occi::Core::Resource
           compute.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#compute"
         end
 
         it "instantiates a compute resource using type identifier" do
           compute = @client.get_resource "http://schemas.ogf.org/occi/infrastructure#compute"
-          
+
           compute.should be_a_kind_of Occi::Core::Resource
           compute.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#compute"
         end
@@ -75,6 +75,34 @@ module Occi
 
           storage.should be_a_kind_of Occi::Core::Resource
           storage.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#storage"
+        end
+
+        it "instantiates a storagelink link using type identifier" do
+          storagelink = @client.get_link "http://schemas.ogf.org/occi/infrastructure#storagelink"
+
+          storagelink.should be_a_kind_of Occi::Core::Link
+          storagelink.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#storagelink"
+        end
+
+        it "instantiates a storagelink link using type name" do
+          storagelink = @client.get_link "storagelink"
+
+          storagelink.should be_a_kind_of Occi::Core::Link
+          storagelink.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#storagelink"
+        end
+
+        it "instantiates a networkinterface link using type identifier" do
+          networkinterface = @client.get_link "http://schemas.ogf.org/occi/infrastructure#networkinterface"
+
+          networkinterface.should be_a_kind_of Occi::Core::Link
+          networkinterface.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#networkinterface"
+        end
+
+        it "instantiates a networkinterface link using type name" do
+          networkinterface = @client.get_link "networkinterface"
+
+          networkinterface.should be_a_kind_of Occi::Core::Link
+          networkinterface.kind.type_identifier.should eq "http://schemas.ogf.org/occi/infrastructure#networkinterface"
         end
 
         it "lists all available resource types" do
@@ -308,6 +336,28 @@ module Occi
           upaction = Occi::Core::Action.new scheme='http://schemas.ogf.org/occi/infrastructure/network/action#', term='up', title='activate network'
           upactioninstance = Occi::Core::ActionInstance.new upaction, nil
           expect(@client.trigger "https://localhost:3300/network/66", upactioninstance).to eq true
+        end
+
+        it "triggers an action with return mixin" do
+          saveaction = Occi::Core::Action.new scheme='http://schemas.ogf.org/occi/infrastructure/compute/action#', term='save', title='save compute'
+          saveactioninstance = Occi::Core::ActionInstance.new saveaction, nil
+          expect(@client.trigger "https://localhost:3300/compute/4096", saveactioninstance).to be_a_kind_of(Occi::Core::Mixins)
+        end
+
+        it 'fails to update without mixins' do
+          expect { @client.update "https://localhost:3300/compute/4096", nil }.to raise_error(RuntimeError)
+          expect { @client.update "https://localhost:3300/compute/4096", Occi::Core::Mixins.new }.to raise_error(RuntimeError)
+        end
+
+        it 'fails to update without resource' do
+          mxns = Occi::Core::Mixins.new << Occi::Core::Mixin.new("http://sitespecific.localhost/occi/infrastructure/resource_tpl", "small")
+          expect { @client.update nil, mxns }.to raise_error(RuntimeError)
+          expect { @client.update '', mxns }.to raise_error(RuntimeError)
+        end
+
+        it 'updates resource with mixins' do
+          mxns = Occi::Core::Mixins.new << Occi::Core::Mixin.new("http://sitespecific.localhost/occi/infrastructure/resource_tpl", "small")
+          expect(@client.update "https://localhost:3300/compute/4096", mxns).to eq "/compute/4096"
         end
 
         it "refreshes its model" do

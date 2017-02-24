@@ -78,10 +78,10 @@ module Occi::Api::Client
       )
 
       response_msg = response_message(response)
-      raise "HTTP GET failed! #{response_msg}" unless response.code == 200
+      raise "HTTP GET failed! #{response_msg}" unless [200, 204].include?(response.code)
 
       # TODO: remove the gsub OCCI-OS hack as soon as they stop using 'uri:'
-      response.body.gsub(/\# uri:\/(compute|storage|network)\/[\n]?/, '').split("\n").compact
+      (response.body || '').gsub(/\# uri:\/(compute|storage|network)\/[\n]?/, '').split("\n").compact
     end
 
     # @see Occi::Api::Client::ClientBase
@@ -168,6 +168,23 @@ module Occi::Api::Client
       path = "#{path}?action=#{action_instance.action.term}"
       collection = Occi::Collection.new
       collection << action_instance
+
+      # make the request
+      post path, collection
+    end
+
+    # @see Occi::Api::Client::ClientBase
+    def update(resource_type_identifier, mixins)
+      raise 'Resource not provided!' if resource_type_identifier.blank?
+      raise 'Mixins not provided!' if mixins.blank?
+
+      # attempt to resolve shortened identifiers
+      resource_type_identifier = get_resource_type_identifier(resource_type_identifier)
+      path = path_for_kind_type_identifier(resource_type_identifier)
+
+      # prepare data
+      collection = Occi::Collection.new
+      collection.mixins = mixins
 
       # make the request
       post path, collection
