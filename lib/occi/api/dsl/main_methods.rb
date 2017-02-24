@@ -7,6 +7,11 @@ module Occi::Api::Dsl
       @client.get_resource(*args)
     end
 
+    def link(*args)
+      check
+      @client.get_link(*args)
+    end
+
     def list(*args)
       check
       @client.list(*args)
@@ -30,6 +35,11 @@ module Occi::Api::Dsl
     def trigger(*args)
       check
       @client.trigger(*args)
+    end
+
+    def update(*args)
+      check
+      @client.update(*args)
     end
 
     def refresh
